@@ -9040,30 +9040,36 @@ function mostrarPregunta(idx) {
 
   const p = preguntas[idx];
   const cont = document.getElementById("quiz-container");
+  cont.innerHTML = "";
 
-  // Crear pregunta NUEVA pero manteniendo contenedor fijo
-  const newBox = document.createElement("div");
-  newBox.className = "question";
-  
+  // Contenedor principal
+  const box = document.createElement("div");
+  box.className = "question";
+
+  // Ocultar mientras cargan imágenes
+  box.style.opacity = "0";
+
   // Título
   const titulo = document.createElement("h2");
   titulo.textContent = `Pregunta ${idx + 1} / ${preguntas.length}`;
   titulo.style.textAlign = "center";
   titulo.style.color = "#602b7a";
-  newBox.appendChild(titulo);
+  titulo.style.width = "100%";
+  box.appendChild(titulo);
 
   // Columnas
   const colPregunta = document.createElement("div");
   colPregunta.className = "col-pregunta";
+
   const colRespuestas = document.createElement("div");
   colRespuestas.className = "col-respuestas";
 
-  // Imagen de pregunta
+  // Imagen pregunta
   const imgP = new Image();
   imgP.src = p.pregunta;
   colPregunta.appendChild(imgP);
 
-  // Divider
+  // Línea vertical
   const divider = document.createElement("div");
   divider.className = "divider";
 
@@ -9074,7 +9080,10 @@ function mostrarPregunta(idx) {
   p.respuestas.forEach((r, i) => {
     const answerBox = document.createElement("div");
     answerBox.className = "answer-box";
-    if (p.seleccionadas.includes(i)) answerBox.classList.add("selected");
+
+    if (p.seleccionadas.includes(i)) {
+      answerBox.classList.add("selected");
+    }
 
     const imgR = new Image();
     imgR.src = r.src;
@@ -9083,15 +9092,20 @@ function mostrarPregunta(idx) {
     answerBox.appendChild(imgR);
 
     answerBox.onclick = () => {
+      // En modo examen, si ya fue respondida, NO permitir cambiar
       if (modoExamen && p.respondida) return;
+
       if (p.tipo === "simple") {
         ans.querySelectorAll(".answer-box").forEach(b => b.classList.remove("selected"));
         p.seleccionadas = [i];
         answerBox.classList.add("selected");
       } else {
         answerBox.classList.toggle("selected");
-        if (answerBox.classList.contains("selected")) p.seleccionadas.push(i);
-        else p.seleccionadas = p.seleccionadas.filter(x => x !== i);
+        if (answerBox.classList.contains("selected")) {
+          p.seleccionadas.push(i);
+        } else {
+          p.seleccionadas = p.seleccionadas.filter(x => x !== i);
+        }
       }
     };
 
@@ -9103,7 +9117,7 @@ function mostrarPregunta(idx) {
   // Botón comprobar
   const btn = document.createElement("button");
   btn.textContent = "Comprobar";
-  btn.onclick = () => comprobar(p, newBox);
+  btn.onclick = () => comprobar(p, box);
   colRespuestas.appendChild(btn);
 
   // Resultado
@@ -9112,28 +9126,44 @@ function mostrarPregunta(idx) {
   res.textContent = p.resultado;
   colRespuestas.appendChild(res);
 
-  newBox.appendChild(colPregunta);
-  newBox.appendChild(divider);
-  newBox.appendChild(colRespuestas);
+  // Añadir al layout
+  box.appendChild(colPregunta);
+  box.appendChild(divider);
+  box.appendChild(colRespuestas);
 
-  // Insertar transición
-  const oldBox = cont.querySelector(".question");
-  if (oldBox) {
-    oldBox.classList.remove("visible");
-    setTimeout(() => oldBox.remove(), 250);
-  }
-
-  cont.appendChild(newBox);
-
-  requestAnimationFrame(() => {
-    newBox.classList.add("visible");
-  });
+  cont.appendChild(box);
 
   actualizarBotones();
   precargarSiguiente();
-  setTimeout(ajustarAlturaRespuestas, 80);
-}
 
+  // ==========================
+  // 📌 PRE-CARGA DE IMÁGENES
+  // ==========================
+  const imgs = box.querySelectorAll("img");
+  const total = imgs.length;
+  let loaded = 0;
+
+  function checkComplete() {
+    loaded++;
+    if (loaded === total) {
+      // Ajustar alturas AHORA que sí tienen tamaño real
+      ajustarAlturaRespuestas();
+
+      // Mostrar suavemente
+      box.style.transition = "opacity .25s ease-in-out";
+      box.style.opacity = "1";
+    }
+  }
+
+  imgs.forEach(img => {
+    if (img.complete && img.naturalHeight > 0) {
+      checkComplete();
+    } else {
+      img.onload = checkComplete;
+      img.onerror = checkComplete;
+    }
+  });
+}
 
 
 /* -------------------------------------------------------
@@ -9245,23 +9275,22 @@ function actualizarBotones() {
 }
 
 function ajustarAlturaRespuestas() {
-  const cajas = document.querySelectorAll(".answer-box");
+    const boxes = document.querySelectorAll(".answer-box");
+    if (!boxes.length) return;
 
-  if (!cajas.length) return;
+    let maxH = 0;
 
-  // Primero quitamos alturas previas
-  cajas.forEach(c => c.style.height = "auto");
+    // restablecer para medir bien
+    boxes.forEach(c => c.style.height = "auto");
 
-  // Tomamos la altura mayor
-  let maxH = 0;
-  cajas.forEach(c => {
-    const h = c.offsetHeight;
-    if (h > maxH) maxH = h;
-  });
+    boxes.forEach(c => {
+        const h = c.getBoundingClientRect().height;
+        if (h > maxH) maxH = h;
+    });
 
-  // Aplicamos esa altura a TODAS
-  cajas.forEach(c => c.style.height = maxH + "px");
+    boxes.forEach(c => c.style.height = maxH + "px");
 }
+
 
 function generarTestAleatorio() {
     const n = parseInt(document.getElementById("random-count").value);
@@ -9302,5 +9331,6 @@ function generarTestAleatorio() {
 </script>
 </body>
 </html>
+
 
 
