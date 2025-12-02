@@ -7,6 +7,14 @@
 
 <style>
 body {
+    opacity: 0;
+    transition: opacity 0.3s ease-in;
+}
+body.loaded {
+    opacity: 1;
+}
+
+body {
   font-family: "Segoe UI", Arial, sans-serif;
   background: #f7f7fa;
   color: #333;
@@ -9286,6 +9294,13 @@ function generarTestAleatorio() {
 }
 
 </script>
+  <script>
+window.addEventListener("load", () => {
+    document.body.classList.add("loaded");
+});
+</script>
+
 </body>
 </html>
+
 
