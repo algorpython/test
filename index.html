@@ -6,6 +6,25 @@
 <title>🧠 Test Interactivo Python</title>
 
 <style>
+    .hidden {
+  visibility: hidden;
+}
+
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #f6f5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #602b7a;
+  z-index: 5000;
+}
+
 body {
     opacity: 0;
     transition: opacity 0.3s ease-in;
@@ -310,6 +329,11 @@ button:hover {
 </style>
 </head>
 <body>
+    <body class="hidden">
+<div id="loader" class="loader">
+  <p>Cargando Test...</p>
+</div>
+
 <div id="login-overlay">
     <div id="login-box">
         <h2>Acceso al Test</h2>
@@ -9323,10 +9347,21 @@ function generarTestAleatorio() {
 window.addEventListener("load", () => {
     document.body.classList.add("loaded");
 });
+
+      window.addEventListener("load", () => {
+    setTimeout(() => {
+        document.body.classList.remove("hidden");
+        const loader = document.getElementById("loader");
+        if(loader) loader.remove();
+        mostrarPregunta(0);
+    }, 50);
+});
+
 </script>
 
 </body>
 </html>
+
 
 
 
