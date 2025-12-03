@@ -328,7 +328,8 @@ button:hover {
 
 </style>
 </head>
-<body class="hidden">
+<body>
+    <body class="hidden">
 <div id="loader" class="loader">
   <p>Cargando Test...</p>
 </div>
@@ -8930,36 +8931,16 @@ document.getElementById("login-input").addEventListener("keypress", (e) => {
   if (e.key === "Enter") checkPassword();
 });
 
-// Un único flujo de inicio: cargar manifest, precargar dimensiones/imágenes,
-// generar menú y mostrar la primera pregunta SOLO cuando todo esté listo.
-async function inicioSeguro() {
+
+window.addEventListener("load", () => {
   if (localStorage.getItem("access_granted") === "true") {
-    document.getElementById("login-overlay").style.display = "none";
-  }
-
-  // Cargar datos embebidos
+  document.getElementById("login-overlay").style.display = "none";
+}
   cargarManifestEmbebido();
-
-  // Precargar dimensiones de todas las imágenes antes de generar elementos
-  try {
-    await precalcularDimensiones();
-  } catch (e) {
-    // En caso de error de carga, continuar igualmente para no bloquear la UI
-    console.warn('Error precargando dimensiones:', e);
-  }
-
-  // Generar menú y mostrar la primera pregunta ahora que sabemos los tamaños
   generarMenu();
   mostrarPregunta(0);
-
-  // Mostrar contenido y quitar loader
-  document.body.classList.add('loaded');
-  document.body.classList.remove('hidden');
-  const loader = document.getElementById('loader');
-  if (loader) loader.remove();
-}
-
-window.addEventListener('load', inicioSeguro);
+  
+});
 
 /* -------------------------------------------------------
    1) Cargar manifest interno sin fetch (instantáneo)
@@ -9380,7 +9361,26 @@ function generarTestAleatorio() {
 }
 
 </script>
-  <!-- Inicio gestionado por `inicioSeguro` definido arriba. -->
+  <script>
+window.addEventListener("load", () => {
+    document.body.classList.add("loaded");
+});
+
+      window.addEventListener("load", () => {
+    setTimeout(() => {
+        document.body.classList.remove("hidden");
+        const loader = document.getElementById("loader");
+        if(loader) loader.remove();
+        mostrarPregunta(0);
+    }, 50);
+});
+async function iniciarTest() {
+  await precalcularDimensiones(); // 🔥 asegura tamaños antes de dibujar
+  mostrarPregunta(0);
+}
+
+window.addEventListener("load", iniciarTest);
+
 </script>
 
 </body>
