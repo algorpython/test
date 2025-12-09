@@ -321,6 +321,138 @@ button:hover {
   transform: translateY(0);
 }
 
+.test-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.test-controls input[type="number"] {
+    width: 120px;
+    padding: 6px;
+    text-align: center;
+    font-size: 18px;
+    border-radius: 6px;
+    border: 2px solid #602b7a;
+}
+
+#btn-generar {
+    background-color: #602b7a;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 17px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+#btn-generar:hover {
+    background-color: #4b1a60;
+}
+
+.timer-option {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 14px;
+    color: #602b7a;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.timer-option input {
+    margin: 0;
+    padding: 0;
+    line-height: 0; /* evita altura extra del input */
+}
+
+.timer-option span {
+    margin-left: 2px; /* control real del espacio */
+    display: inline-block;
+}
+
+
+#test-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 15px;
+}
+
+.row-arriba {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#random-count {
+    width: 150px;
+    padding: 6px;
+    font-size: 15px;
+    text-align: center;
+    border-radius: 6px;
+    border: 2px solid #602b7a;
+}
+
+#btn-generar {
+    background-color: #602b7a;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+}
+
+#btn-generar:hover {
+    background-color: #4b1a60;
+}
+
+#random-test-box {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* 👉 mantiene alineación a la derecha */
+    gap: 6px;
+}
+
+.row-arriba {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+#random-count {
+    width: 150px;
+    padding: 6px;
+    text-align: center;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 2px solid #602b7a;
+}
+
+#btn-generar {
+    background-color: #602b7a;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#btn-generar:hover {
+    background-color: #4b1a60;
+}
 
 </style>
 </head>
@@ -348,16 +480,37 @@ button:hover {
   <p id="progress-text" style="text-align:right; font-size:14px; color:#602b7a; font-weight:600; margin-top:4px;">
     0% completado
   </p>
+  <p id="timer-examen" 
+   style="display:none; 
+          text-align:center; 
+          font-size:18px; 
+          font-weight:bold; 
+          color:#d9534f; 
+          margin-top:10px;">
+⏱
+</p>
+
 </div>
 
   <div id="contador-examen" style="display:none; text-align:right; margin-right:20px; font-size:18px; font-weight:600; color:#602b7a;">
   Aciertos: 0 / 0
 </div>
 
-  <div id="random-test-box">
-  <input type="number" id="random-count" min="1" max="402" placeholder="Número de preguntas" />
-  <button onclick="generarTestAleatorio()">Generar test</button>
+<!-- 🔹 CONTROLES PARA GENERAR TEST (en la parte derecha) -->
+<div id="random-test-box">
+    <div class="row-arriba">
+        <input type="number" id="random-count" min="1" max="402" placeholder="Número de preguntas" />
+        <button id="btn-generar" onclick="generarTestAleatorio()">Generar test</button>
+    </div>
+
+    <label class="timer-option">
+    <input type="checkbox" id="enable-timer">
+    <span>⏱ Añadir temporizador</span>
+</label>
+
 </div>
+
+
 
   <div id="quiz-container"></div>
 
@@ -630,16 +783,16 @@ button:hover {
     "pregunta": "screenshots/p13.webp",
     "respuestas": [
       {
-        "src": "screenshots/p13r1.webp",
-        "correcta": false
+        "src": "screenshots/p13r1c.webp",
+        "correcta": true
       },
       {
         "src": "screenshots/p13r2.webp",
         "correcta": false
       },
       {
-        "src": "screenshots/p13r3c.webp",
-        "correcta": true
+        "src": "screenshots/p13r3.webp",
+        "correcta": false
       },
       {
         "src": "screenshots/p13r4.webp",
@@ -8908,8 +9061,15 @@ let preguntas = [];
 let indiceActual = 0;
 const TOTAL_PREGUNTAS = 402;
 
+// TIMER opcional
+let tiempoRestante = 0;
+let intervaloTiempo = null;
+const TIEMPO_POR_PREGUNTA = 90; // 90s = 1,5 min
+
 const PASSWORD = "algpython25";
 
+
+/* ----------- LOGIN ---------------- */
 function checkPassword() {
   const input = document.getElementById("login-input").value.trim();
   const error = document.getElementById("login-error");
@@ -8921,15 +9081,13 @@ function checkPassword() {
     error.textContent = "Contraseña incorrecta";
   }
 }
-
 document.getElementById("login-button").addEventListener("click", checkPassword);
 document.getElementById("login-input").addEventListener("keypress", (e) => {
   if (e.key === "Enter") checkPassword();
 });
 
-/* -------------------------------------------------------
-   Al cargar la página
---------------------------------------------------------*/
+
+/* ----------- INICIO ---------- */
 window.addEventListener("load", () => {
   if (localStorage.getItem("access_granted") === "true") {
     document.getElementById("login-overlay").style.display = "none";
@@ -8939,9 +9097,8 @@ window.addEventListener("load", () => {
   mostrarPregunta(0);
 });
 
-/* -------------------------------------------------------
-   1) Cargar manifest interno sin fetch (instantáneo)
---------------------------------------------------------*/
+
+/* -------- CARGAR MANIFEST -------- */
 function cargarManifestEmbebido() {
   const raw = document.getElementById("manifest-data").textContent.trim();
   const data = JSON.parse(raw);
@@ -8955,65 +9112,61 @@ function cargarManifestEmbebido() {
     tipo: info.respuestas.filter(r => r.correcta).length <= 1 ? "simple" : "multiple",
     respondida: false
   }));
+
   preguntasOriginales = JSON.parse(JSON.stringify(preguntas));
 }
 
-/* -------------------------------------------------------
-   2) Crear menú lateral
---------------------------------------------------------*/
+
+/* -------- MENÚ LATERAL -------- */
 function generarMenu() {
   const cont = document.getElementById("menuPreguntas");
   cont.innerHTML = "";
 
-  const total = preguntas.length;   // debería ser 402
-  const porGrupo = 10;              // tamaño del rango
+  const total = preguntas.length;
+  const porGrupo = 10;
 
   for (let inicio = 1; inicio <= total; inicio += porGrupo * 2) {
     const row = document.createElement("div");
     row.className = "range-row";
 
     for (let col = 0; col < 2; col++) {
-      const rangoInicio = inicio + col * porGrupo;
-      if (rangoInicio > total) break;
+      const ini = inicio + col * porGrupo;
+      if (ini > total) break;
 
-      const rangoFin = Math.min(rangoInicio + porGrupo - 1, total);
+      const fin = Math.min(ini + porGrupo - 1, total);
 
-      const group = document.createElement("div");
-      group.className = "range-group";
+      const g = document.createElement("div");
+      g.className = "range-group";
 
       const toggle = document.createElement("button");
       toggle.className = "range-toggle";
-      toggle.textContent = `${rangoInicio}-${rangoFin}`;
+      toggle.textContent = `${ini}-${fin}`;
 
       const content = document.createElement("div");
       content.className = "range-content";
 
-      for (let q = rangoInicio; q <= rangoFin; q++) {
-        const qBtn = document.createElement("button");
-        qBtn.className = "question-btn";
-        qBtn.textContent = `Pregunta ${q}`;
-        qBtn.dataset.index = q - 1;
+      for (let q = ini; q <= fin; q++) {
+        const btn = document.createElement("button");
+        btn.className = "question-btn";
+        btn.textContent = `Pregunta ${q}`;
+        btn.dataset.index = q - 1;
 
-        qBtn.onclick = () => {
+        btn.onclick = () => {
           mostrarPregunta(q - 1);
-          document.querySelectorAll("#menuPreguntas .range-content").forEach(div => {
-            div.style.display = "none";
-          });
+          document.querySelectorAll(".range-content").forEach(x => x.style.display = "none");
         };
 
-        content.appendChild(qBtn);
+        content.appendChild(btn);
       }
 
       toggle.onclick = () => {
-        document.querySelectorAll("#menuPreguntas .range-content").forEach(div => {
-          div.style.display = "none";
-        });
+        document.querySelectorAll(".range-content").forEach(x => x.style.display = "none");
         content.style.display = "block";
       };
 
-      group.appendChild(toggle);
-      group.appendChild(content);
-      row.appendChild(group);
+      g.appendChild(toggle);
+      g.appendChild(content);
+      row.appendChild(g);
     }
 
     cont.appendChild(row);
@@ -9021,16 +9174,13 @@ function generarMenu() {
 }
 
 function actualizarMenu() {
-  const buttons = document.querySelectorAll("#menuPreguntas .question-btn");
-  buttons.forEach(btn => {
-    const idx = parseInt(btn.dataset.index, 10);
-    btn.classList.toggle("active", idx === indiceActual);
+  document.querySelectorAll(".question-btn").forEach(btn => {
+    btn.classList.toggle("active", parseInt(btn.dataset.index) === indiceActual);
   });
 }
 
-/* -------------------------------------------------------
-   3) Mostrar una pregunta
---------------------------------------------------------*/
+
+/* -------- MOSTRAR PREGUNTA -------- */
 function mostrarPregunta(idx) {
   indiceActual = idx;
   actualizarMenu();
@@ -9043,263 +9193,200 @@ function mostrarPregunta(idx) {
   box.className = "question";
   box.style.opacity = "0";
 
-  const titulo = document.createElement("h2");
-  titulo.textContent = `Pregunta ${idx + 1} / ${preguntas.length}`;
-  titulo.style.textAlign = "center";
-  titulo.style.color = "#602b7a";
-  titulo.style.width = "100%";
-  box.appendChild(titulo);
+  const h = document.createElement("h2");
+  h.textContent = `Pregunta ${idx + 1} / ${preguntas.length}`;
+  h.style.textAlign = "center";
+  h.style.color = "#602b7a";
+  box.appendChild(h);
 
-  const colPregunta = document.createElement("div");
-  colPregunta.className = "col-pregunta";
-
-  const colRespuestas = document.createElement("div");
-  colRespuestas.className = "col-respuestas";
+  const colP = document.createElement("div");
+  colP.className = "col-pregunta";
 
   const imgP = new Image();
   imgP.src = p.pregunta;
-  colPregunta.appendChild(imgP);
+  colP.appendChild(imgP);
 
   const divider = document.createElement("div");
   divider.className = "divider";
 
-  const ans = document.createElement("div");
-  ans.className = "answers";
+  const colR = document.createElement("div");
+  colR.className = "col-respuestas";
+
+  const answers = document.createElement("div");
+  answers.className = "answers";
 
   p.respuestas.forEach((r, i) => {
-    const answerBox = document.createElement("div");
-    answerBox.className = "answer-box";
-
-    if (p.seleccionadas.includes(i)) {
-      answerBox.classList.add("selected");
-    }
+    const ab = document.createElement("div");
+    ab.className = "answer-box";
+    if (p.seleccionadas.includes(i)) ab.classList.add("selected");
 
     const imgR = new Image();
     imgR.src = r.src;
-    imgR.dataset.correcta = r.correcta;
-    answerBox.dataset.correcta = r.correcta ? "true" : "false";
-    answerBox.appendChild(imgR);
+    ab.dataset.correcta = r.correcta ? "true" : "false";
+    ab.appendChild(imgR);
 
-    answerBox.onclick = () => {
+    ab.onclick = () => {
       if (modoExamen && p.respondida) return;
-
       if (p.tipo === "simple") {
-        ans.querySelectorAll(".answer-box").forEach(b => b.classList.remove("selected"));
+        answers.querySelectorAll(".answer-box").forEach(x => x.classList.remove("selected"));
         p.seleccionadas = [i];
-        answerBox.classList.add("selected");
+        ab.classList.add("selected");
       } else {
-        answerBox.classList.toggle("selected");
-        if (answerBox.classList.contains("selected")) {
+        ab.classList.toggle("selected");
+        if (ab.classList.contains("selected"))
           p.seleccionadas.push(i);
-        } else {
+        else
           p.seleccionadas = p.seleccionadas.filter(x => x !== i);
-        }
       }
     };
 
-    ans.appendChild(answerBox);
+    answers.appendChild(ab);
   });
 
-  colRespuestas.appendChild(ans);
+  colR.appendChild(answers);
 
-  const btn = document.createElement("button");
-  btn.textContent = "Comprobar";
-  btn.onclick = () => comprobar(p, box);
-  colRespuestas.appendChild(btn);
+  const btnC = document.createElement("button");
+  btnC.textContent = "Comprobar";
+  btnC.onclick = () => comprobar(p, box);
+  colR.appendChild(btnC);
 
   const res = document.createElement("div");
   res.className = "result";
   res.textContent = p.resultado;
-  colRespuestas.appendChild(res);
+  colR.appendChild(res);
 
-  box.appendChild(colPregunta);
+  box.appendChild(colP);
   box.appendChild(divider);
-  box.appendChild(colRespuestas);
-
+  box.appendChild(colR);
   cont.appendChild(box);
 
   actualizarBotones();
   precargarSiguiente();
-
-  const imgs = box.querySelectorAll("img");
-  const totalImgs = imgs.length;
-  let loaded = 0;
-
-  function checkComplete() {
-    loaded++;
-    if (loaded === totalImgs) {
-      ajustarAlturaRespuestas();
-      box.style.transition = "opacity .25s ease-in-out";
-      box.style.opacity = "1";
-    }
-  }
-
-  imgs.forEach(img => {
-    if (img.complete && img.naturalHeight > 0) {
-      checkComplete();
-    } else {
-      img.onload = checkComplete;
-      img.onerror = checkComplete;
-    }
-  });
-
-  // Actualizar barra de progreso (si existe) al cambiar de pregunta
   actualizarProgreso();
-}
+  actualizarTimerUI();
 
-/* -------------------------------------------------------
-   4) Precargar siguiente pregunta
---------------------------------------------------------*/
-function precargarSiguiente() {
-  const next = preguntas[indiceActual + 1];
-  if (!next) return;
-
-  const preload = new Image();
-  preload.src = next.pregunta;
-
-  next.respuestas.forEach(r => {
-    const img = new Image();
-    img.src = r.src;
+  let loaded = 0;
+  const imgs = box.querySelectorAll("img");
+  imgs.forEach(img => {
+    img.onload = img.onerror = () => {
+      if (++loaded === imgs.length) {
+        ajustarAlturaRespuestas();
+        box.style.transition = "opacity .25s"; box.style.opacity = "1";
+      }
+    };
   });
 }
 
-/* -------------------------------------------------------
-   5) Comprobar respuesta
---------------------------------------------------------*/
+function precargarSiguiente() {
+  const p = preguntas[indiceActual + 1];
+  if (!p) return;
+  new Image().src = p.pregunta;
+  p.respuestas.forEach(r => new Image().src = r.src);
+}
+
+
+/* -------- COMPROBAR -------- */
 function comprobar(p, box) {
-  const boxes = box.querySelectorAll(".answers .answer-box");
-
-  const seleccionadas = [...boxes].filter(b => b.classList.contains("selected"));
-  const correctas     = [...boxes].filter(b => b.dataset.correcta === "true");
-
-  const bien = seleccionadas.filter(b => b.dataset.correcta === "true");
-  const mal  = seleccionadas.filter(b => b.dataset.correcta === "false");
+  const cajas = box.querySelectorAll(".answer-box");
+  const sel = [...cajas].filter(b => b.classList.contains("selected"));
+  const correctas = [...cajas].filter(b => b.dataset.correcta === "true");
+  const buenas = sel.filter(b => b.dataset.correcta === "true");
+  const malas = sel.filter(b => b.dataset.correcta === "false");
 
   const res = box.querySelector(".result");
 
-  if (modoExamen && p.respondida) return;
-
-  if (seleccionadas.length === 0) {
-    res.textContent = "Selecciona al menos una respuesta.";
+  if (!sel.length) {
+    res.textContent = "Selecciona una opción.";
     res.className = "result incorrect";
-    p.resultado = res.textContent;
     return;
   }
 
-  if (bien.length === correctas.length && mal.length === 0) {
-    res.textContent = "✅ ¡Respuesta correcta!";
+  if (buenas.length === correctas.length && malas.length === 0) {
+    res.textContent = "¡Correcto!";
     res.className = "result correct";
-
-    if (modoExamen) {
-      aciertos++;
-    }
-
-    p.resultado = res.textContent;
+    if (modoExamen) aciertos++;
   } else {
-    res.textContent = "❌ Respuesta incorrecta";
+    res.textContent = "Incorrecto";
     res.className = "result incorrect";
-    p.resultado = res.textContent;
   }
 
   if (modoExamen) {
-    boxes.forEach(b => {
-      b.style.pointerEvents = "none";
-
-      if (b.dataset.correcta === "true") {
-        b.style.borderColor = "#28a745";
-        b.style.boxShadow = "0 0 8px rgba(40,167,69,0.4)";
-      }
-
-      if (b.classList.contains("selected") && b.dataset.correcta === "false") {
-        b.style.borderColor = "#dc3545";
-        b.style.boxShadow = "0 0 8px rgba(220,53,69,0.4)";
-      }
-    });
-
+    cajas.forEach(b => b.style.pointerEvents = "none");
     p.respondida = true;
   }
 
-  // Actualizar porcentaje y progreso tras comprobar
   actualizarProgreso();
 }
 
-/* -------------------------------------------------------
-   6) Navegación
---------------------------------------------------------*/
+
+/* -------- CONTROL BOTONES -------- */
 function actualizarBotones() {
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  if (!prevBtn || !nextBtn) return;
+  const prev = document.getElementById("prevBtn");
+  const next = document.getElementById("nextBtn");
 
-  prevBtn.disabled = indiceActual === 0;
-  prevBtn.onclick = () => {
-    if (indiceActual > 0) mostrarPregunta(--indiceActual);
-  };
+  prev.style.display = "inline-block";
+  next.style.display = "inline-block";
 
-  const esUltima = indiceActual === preguntas.length - 1;
+  prev.disabled = indiceActual === 0;
+  prev.onclick = () => mostrarPregunta(--indiceActual);
 
-  if (modoExamen && esUltima) {
-    nextBtn.disabled = false;
-    nextBtn.textContent = "Finalizar";
-    nextBtn.onclick = finalizarExamen;
+  const ultima = indiceActual === preguntas.length - 1;
+
+  if (modoExamen && ultima) {
+    next.textContent = "Finalizar";
+    next.onclick = finalizarExamen;
   } else {
-    nextBtn.textContent = "Siguiente";
-    nextBtn.disabled = (!modoExamen && esUltima);
-    nextBtn.onclick = () => {
-      if (indiceActual < preguntas.length - 1) mostrarPregunta(++indiceActual);
-    };
+    next.textContent = "Siguiente";
+    next.disabled = ultima && !modoExamen;
+    next.onclick = () => mostrarPregunta(++indiceActual);
   }
 }
 
-function ajustarAlturaRespuestas() {
-  const boxes = document.querySelectorAll(".answer-box");
-  if (!boxes.length) return;
 
-  let maxH = 0;
-
-  boxes.forEach(c => c.style.height = "auto");
-
-  boxes.forEach(c => {
-    const h = c.getBoundingClientRect().height;
-    if (h > maxH) maxH = h;
-  });
-
-  boxes.forEach(c => c.style.height = maxH + "px");
-}
-
-/* -------------------------------------------------------
-   7) Progreso y porcentaje
---------------------------------------------------------*/
+/* -------- PROGRESO -------- */
 function actualizarProgreso() {
   const total = totalExamen || preguntas.length;
   const respondidas = preguntas.filter(p => p.respondida).length;
-  const porcentajeCompletado = total ? Math.round((respondidas / total) * 100) : 0;
+  const pct = Math.round((respondidas / total) * 100);
 
-  const barra = document.getElementById("progress-fill");
-  const txtProg = document.getElementById("progress-text");
-  if (barra) barra.style.width = porcentajeCompletado + "%";
-  if (txtProg) txtProg.textContent = `${porcentajeCompletado}% completado`;
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-text").textContent = `${pct}% completado`;
 
-  const contador = document.getElementById("contador-examen");
-  if (contador && modoExamen && totalExamen) {
-    const porcentajeAcierto = Math.round((aciertos / totalExamen) * 100);
-    contador.textContent = `Aciertos: ${aciertos} / ${totalExamen} (${porcentajeAcierto}%)`;
+  if (modoExamen) {
+    document.getElementById("contador-examen").textContent =
+      `Aciertos: ${aciertos} / ${totalExamen} (${Math.round((aciertos / totalExamen) * 100)}%)`;
   }
 }
 
-/* -------------------------------------------------------
-   8) Generar test aleatorio (modo examen)
---------------------------------------------------------*/
+
+function ajustarAlturaRespuestas() {
+  let maxH = 0;
+  const boxes = document.querySelectorAll(".answer-box");
+  boxes.forEach(b => b.style.height = "auto");
+  boxes.forEach(b => maxH = Math.max(maxH, b.getBoundingClientRect().height));
+  boxes.forEach(b => b.style.height = maxH + "px");
+}
+
+
+/* -------- TIMER (Opcional) -------- */
+function actualizarTimerUI() {
+  const t = document.getElementById("timer-examen");
+  if (!modoExamen || !document.getElementById("enable-timer").checked) return;
+
+  let min = Math.floor(tiempoRestante / 60);
+  let seg = tiempoRestante % 60;
+  if (seg < 10) seg = "0" + seg;
+
+  t.textContent = `⏱ ${min}:${seg}`;
+}
+
+
+/* -------- GENERAR TEST -------- */
 function generarTestAleatorio() {
   const n = parseInt(document.getElementById("random-count").value);
 
-  if (!n || n < 1) {
+  if (!n || n < 1 || n > preguntasOriginales.length) {
     alert("Introduce un número válido.");
-    return;
-  }
-
-  if (n > preguntasOriginales.length) {
-    alert("El número máximo es " + preguntasOriginales.length);
     return;
   }
 
@@ -9307,81 +9394,86 @@ function generarTestAleatorio() {
   aciertos = 0;
   totalExamen = n;
 
-  const contador = document.getElementById("contador-examen");
-  if (contador) {
-    contador.style.display = "block";
-    contador.textContent = `Aciertos: 0 / ${n} (0%)`;
+  document.getElementById("contador-examen").style.display = "block";
+  document.getElementById("progress-container").style.display = "block";
+
+  const usarTimer = document.getElementById("enable-timer").checked;
+
+  if (usarTimer) {
+    document.getElementById("timer-examen").style.display = "block";
+    tiempoRestante = n * TIEMPO_POR_PREGUNTA;
+    if (intervaloTiempo) clearInterval(intervaloTiempo);
+    intervaloTiempo = setInterval(() => {
+      tiempoRestante--;
+      actualizarTimerUI();
+      if (tiempoRestante <= 0) {
+        clearInterval(intervaloTiempo);
+        alert("⏱ ¡Se acabó el tiempo!");
+        finalizarExamen();
+      }
+    }, 1000);
+  } else {
+    document.getElementById("timer-examen").style.display = "none";
+    if (intervaloTiempo) clearInterval(intervaloTiempo);
   }
 
-  const progCont = document.getElementById("progress-container");
-  if (progCont) {
-    progCont.style.display = "block";
-  }
-
+  // seleccionar aleatorias
   let ids = [...Array(preguntasOriginales.length).keys()];
   ids.sort(() => Math.random() - 0.5);
   ids = ids.slice(0, n);
-
   preguntas = ids.map(i => JSON.parse(JSON.stringify(preguntasOriginales[i])));
-  preguntas.forEach((p, idx) => {
-    p.numero = idx + 1;
-    p.respondida = false;
-  });
+  preguntas.forEach((p, i) => p.numero = i + 1);
 
   generarMenu();
   mostrarPregunta(0);
-  actualizarProgreso();
 }
 
-/* -------------------------------------------------------
-   9) Finalizar examen
---------------------------------------------------------*/
+
+/* -------- FINALIZAR EXAMEN -------- */
 function finalizarExamen() {
-  const total = totalExamen || preguntas.length;
-  const porcentajeAcierto = total ? Math.round((aciertos / total) * 100) : 0;
-  const esApto = porcentajeAcierto >= 70;
+  const usarTimer = document.getElementById("enable-timer").checked;
+  if (usarTimer && intervaloTiempo) clearInterval(intervaloTiempo);
+  document.getElementById("timer-examen").style.display = "none";
+
+  const pct = Math.round((aciertos / totalExamen) * 100);
+  const esApto = pct >= 70;
 
   const cont = document.getElementById("quiz-container");
   cont.innerHTML = "";
 
-  const box = document.createElement("div");
-  box.className = "resultado-final";
-  box.style.textAlign = "center";
+  const d = document.createElement("div");
+  d.style.textAlign = "center";
 
-  const h2 = document.createElement("h2");
-  h2.textContent = esApto ? "🎉 ¡APTO!" : "❌ NO APTO";
-  h2.style.color = esApto ? "#2e8b57" : "#d32f2f";
+  const h = document.createElement("h2");
+  h.textContent = esApto ? "🎉 ¡APTO!" : "❌ NO APTO";
+  h.style.color = esApto ? "#2e8b57" : "#d32f2f";
 
   const p = document.createElement("p");
-  p.textContent = `Has acertado ${aciertos} de ${total} preguntas (${porcentajeAcierto}%).`;
+  p.textContent = `Has acertado ${aciertos} de ${totalExamen} (${pct}%).`;
 
-  const btnVolver = document.createElement("button");
-  btnVolver.textContent = "Volver al modo estudio";
-  btnVolver.style.marginTop = "20px";
-  btnVolver.onclick = volverModoEstudio;
+  const volver = document.createElement("button");
+  volver.textContent = "Volver al modo estudio";
+  volver.style.marginTop = "20px";
+  volver.onclick = volverModoEstudio;
 
-  box.appendChild(h2);
-  box.appendChild(p);
-  box.appendChild(btnVolver);
-  cont.appendChild(box);
+  d.appendChild(h);
+  d.appendChild(p);
+  d.appendChild(volver);
+  cont.appendChild(d);
 
-  // Ocultar barra + contador
-  const progCont = document.getElementById("progress-container");
-  if (progCont) progCont.style.display = "none";
-  const contador = document.getElementById("contador-examen");
-  if (contador) contador.style.display = "none";
-
-  // Ocultar controles de navegación
+  document.getElementById("progress-container").style.display = "none";
+  document.getElementById("contador-examen").style.display = "none";
   document.getElementById("prevBtn").style.display = "none";
   document.getElementById("nextBtn").style.display = "none";
 }
 
+
+/* -------- VOLVER MODO ESTUDIO -------- */
 function volverModoEstudio() {
   modoExamen = false;
   aciertos = 0;
   totalExamen = 0;
 
-  // Restaurar conjunto completo de preguntas
   preguntas = JSON.parse(JSON.stringify(preguntasOriginales));
   preguntas.forEach(p => {
     p.seleccionadas = [];
@@ -9392,14 +9484,13 @@ function volverModoEstudio() {
   generarMenu();
   mostrarPregunta(0);
 
-  // Volver a mostrar los botones de navegación
   document.getElementById("prevBtn").style.display = "inline-block";
   document.getElementById("nextBtn").style.display = "inline-block";
 }
-
 </script>
+
+
 
 </body>
 </html>
-
 
