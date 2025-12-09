@@ -9302,11 +9302,11 @@ function comprobar(p, box) {
   }
 
   if (buenas.length === correctas.length && malas.length === 0) {
-    res.textContent = "¡Correcto!";
+    res.textContent = "✅ ¡Respuesta correcta!";
     res.className = "result correct";
     if (modoExamen) aciertos++;
   } else {
-    res.textContent = "Incorrecto";
+    res.textContent = "❌ Respuesta incorrecta";
     res.className = "result incorrect";
   }
 
@@ -9493,4 +9493,5 @@ function volverModoEstudio() {
 
 </body>
 </html>
+
 
