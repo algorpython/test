@@ -341,6 +341,15 @@ button:hover {
 
 <div id="main">
   <h1>🧠 Test PCEP</h1>
+  <div id="progress-container" style="display:none; width: 100%; max-width: 800px; margin: 10px auto;">
+  <div id="progress-bar" style="height: 12px; background:#ccc; border-radius:6px;">
+    <div id="progress-fill" style="height:12px; width:0%; background:#602b7a; border-radius:6px; transition:width .3s;"></div>
+  </div>
+  <p id="progress-text" style="text-align:right; font-size:14px; color:#602b7a; font-weight:600; margin-top:4px;">
+    0% completado
+  </p>
+</div>
+
   <div id="contador-examen" style="display:none; text-align:right; margin-right:20px; font-size:18px; font-weight:600; color:#602b7a;">
   Aciertos: 0 / 0
 </div>
@@ -622,7 +631,7 @@ button:hover {
     "respuestas": [
       {
         "src": "screenshots/p13r1c.webp",
-        "correcta": true
+        "correcta": false
       },
       {
         "src": "screenshots/p13r2.webp",
@@ -630,7 +639,7 @@ button:hover {
       },
       {
         "src": "screenshots/p13r3.webp",
-        "correcta": false
+        "correcta": true
       },
       {
         "src": "screenshots/p13r4.webp",
@@ -8889,7 +8898,6 @@ button:hover {
   }
 }
 </script>
-
 <script>
 let modoExamen = false;
 let aciertos = 0;
@@ -8908,10 +8916,7 @@ function checkPassword() {
 
   if (input === PASSWORD) {
     document.getElementById("login-overlay").style.display = "none";
-
-    // Guardar que ya entró
     localStorage.setItem("access_granted", "true");
-
   } else {
     error.textContent = "Contraseña incorrecta";
   }
@@ -8922,15 +8927,16 @@ document.getElementById("login-input").addEventListener("keypress", (e) => {
   if (e.key === "Enter") checkPassword();
 });
 
-
+/* -------------------------------------------------------
+   Al cargar la página
+--------------------------------------------------------*/
 window.addEventListener("load", () => {
   if (localStorage.getItem("access_granted") === "true") {
-  document.getElementById("login-overlay").style.display = "none";
-}
+    document.getElementById("login-overlay").style.display = "none";
+  }
   cargarManifestEmbebido();
   generarMenu();
   mostrarPregunta(0);
-  
 });
 
 /* -------------------------------------------------------
@@ -8946,8 +8952,8 @@ function cargarManifestEmbebido() {
     respuestas: info.respuestas,
     seleccionadas: [],
     resultado: "",
-    tipo: info.respuestas.filter(r => r.correcta).length <= 1 ? "simple" : "multiple"
-    
+    tipo: info.respuestas.filter(r => r.correcta).length <= 1 ? "simple" : "multiple",
+    respondida: false
   }));
   preguntasOriginales = JSON.parse(JSON.stringify(preguntas));
 }
@@ -8963,7 +8969,6 @@ function generarMenu() {
   const porGrupo = 10;              // tamaño del rango
 
   for (let inicio = 1; inicio <= total; inicio += porGrupo * 2) {
-    // Cada iteración crea una fila con DOS rangos: ej. 1-10 y 11-20
     const row = document.createElement("div");
     row.className = "range-row";
 
@@ -8976,46 +8981,35 @@ function generarMenu() {
       const group = document.createElement("div");
       group.className = "range-group";
 
-      // Botón de rango (ej. "1-10")
       const toggle = document.createElement("button");
       toggle.className = "range-toggle";
       toggle.textContent = `${rangoInicio}-${rangoFin}`;
 
-      // Contenedor de preguntas de ese rango
       const content = document.createElement("div");
       content.className = "range-content";
 
-      // Crear los botones de cada pregunta del rango
       for (let q = rangoInicio; q <= rangoFin; q++) {
         const qBtn = document.createElement("button");
         qBtn.className = "question-btn";
         qBtn.textContent = `Pregunta ${q}`;
-        qBtn.dataset.index = q - 1;   // índice en el array preguntas
+        qBtn.dataset.index = q - 1;
 
         qBtn.onclick = () => {
-    mostrarPregunta(q - 1);
-
-    // Cerrar todos los rangos al seleccionar una pregunta
-    document.querySelectorAll("#menuPreguntas .range-content").forEach(div => {
-        div.style.display = "none";
-    });
-};
-
+          mostrarPregunta(q - 1);
+          document.querySelectorAll("#menuPreguntas .range-content").forEach(div => {
+            div.style.display = "none";
+          });
+        };
 
         content.appendChild(qBtn);
       }
 
-      // Click en el rango → mostrar/ocultar preguntas
       toggle.onclick = () => {
-    // Cerrar todos los contenidos primero
-    document.querySelectorAll("#menuPreguntas .range-content").forEach(div => {
-        div.style.display = "none";
-    });
-
-    // Abrir solo este
-    content.style.display = "block";
-};
-
+        document.querySelectorAll("#menuPreguntas .range-content").forEach(div => {
+          div.style.display = "none";
+        });
+        content.style.display = "block";
+      };
 
       group.appendChild(toggle);
       group.appendChild(content);
@@ -9034,7 +9028,6 @@ function actualizarMenu() {
   });
 }
 
-
 /* -------------------------------------------------------
    3) Mostrar una pregunta
 --------------------------------------------------------*/
@@ -9046,14 +9039,10 @@ function mostrarPregunta(idx) {
   const cont = document.getElementById("quiz-container");
   cont.innerHTML = "";
 
-  // Contenedor principal
   const box = document.createElement("div");
   box.className = "question";
-
-  // Ocultar mientras cargan imágenes
   box.style.opacity = "0";
 
-  // Título
   const titulo = document.createElement("h2");
   titulo.textContent = `Pregunta ${idx + 1} / ${preguntas.length}`;
   titulo.style.textAlign = "center";
@@ -9061,23 +9050,19 @@ function mostrarPregunta(idx) {
   titulo.style.width = "100%";
   box.appendChild(titulo);
 
-  // Columnas
   const colPregunta = document.createElement("div");
   colPregunta.className = "col-pregunta";
 
   const colRespuestas = document.createElement("div");
   colRespuestas.className = "col-respuestas";
 
-  // Imagen pregunta
   const imgP = new Image();
   imgP.src = p.pregunta;
   colPregunta.appendChild(imgP);
 
-  // Línea vertical
   const divider = document.createElement("div");
   divider.className = "divider";
 
-  // Respuestas
   const ans = document.createElement("div");
   ans.className = "answers";
 
@@ -9096,7 +9081,6 @@ function mostrarPregunta(idx) {
     answerBox.appendChild(imgR);
 
     answerBox.onclick = () => {
-      // En modo examen, si ya fue respondida, NO permitir cambiar
       if (modoExamen && p.respondida) return;
 
       if (p.tipo === "simple") {
@@ -9118,19 +9102,16 @@ function mostrarPregunta(idx) {
 
   colRespuestas.appendChild(ans);
 
-  // Botón comprobar
   const btn = document.createElement("button");
   btn.textContent = "Comprobar";
   btn.onclick = () => comprobar(p, box);
   colRespuestas.appendChild(btn);
 
-  // Resultado
   const res = document.createElement("div");
   res.className = "result";
   res.textContent = p.resultado;
   colRespuestas.appendChild(res);
 
-  // Añadir al layout
   box.appendChild(colPregunta);
   box.appendChild(divider);
   box.appendChild(colRespuestas);
@@ -9140,20 +9121,14 @@ function mostrarPregunta(idx) {
   actualizarBotones();
   precargarSiguiente();
 
-  // ==========================
-  // 📌 PRE-CARGA DE IMÁGENES
-  // ==========================
   const imgs = box.querySelectorAll("img");
-  const total = imgs.length;
+  const totalImgs = imgs.length;
   let loaded = 0;
 
   function checkComplete() {
     loaded++;
-    if (loaded === total) {
-      // Ajustar alturas AHORA que sí tienen tamaño real
+    if (loaded === totalImgs) {
       ajustarAlturaRespuestas();
-
-      // Mostrar suavemente
       box.style.transition = "opacity .25s ease-in-out";
       box.style.opacity = "1";
     }
@@ -9167,8 +9142,10 @@ function mostrarPregunta(idx) {
       img.onerror = checkComplete;
     }
   });
-}
 
+  // Actualizar barra de progreso (si existe) al cambiar de pregunta
+  actualizarProgreso();
+}
 
 /* -------------------------------------------------------
    4) Precargar siguiente pregunta
@@ -9190,149 +9167,238 @@ function precargarSiguiente() {
    5) Comprobar respuesta
 --------------------------------------------------------*/
 function comprobar(p, box) {
+  const boxes = box.querySelectorAll(".answers .answer-box");
 
-    const boxes = box.querySelectorAll(".answers .answer-box");
+  const seleccionadas = [...boxes].filter(b => b.classList.contains("selected"));
+  const correctas     = [...boxes].filter(b => b.dataset.correcta === "true");
 
-    const seleccionadas = [...boxes].filter(b => b.classList.contains("selected"));
-    const correctas     = [...boxes].filter(b => b.dataset.correcta === "true");
+  const bien = seleccionadas.filter(b => b.dataset.correcta === "true");
+  const mal  = seleccionadas.filter(b => b.dataset.correcta === "false");
 
-    const bien = seleccionadas.filter(b => b.dataset.correcta === "true");
-    const mal  = seleccionadas.filter(b => b.dataset.correcta === "false");
+  const res = box.querySelector(".result");
 
-    const res = box.querySelector(".result");
+  if (modoExamen && p.respondida) return;
 
-    // Modo examen: si ya fue respondida, NO volver a evaluar
-    if (modoExamen && p.respondida) return;
+  if (seleccionadas.length === 0) {
+    res.textContent = "Selecciona al menos una respuesta.";
+    res.className = "result incorrect";
+    p.resultado = res.textContent;
+    return;
+  }
 
-    if (seleccionadas.length === 0) {
-        res.textContent = "Selecciona al menos una respuesta.";
-        res.className = "result incorrect";
-        p.resultado = res.textContent;
-        return;
-    }
+  if (bien.length === correctas.length && mal.length === 0) {
+    res.textContent = "✅ ¡Respuesta correcta!";
+    res.className = "result correct";
 
-    // Correcto
-    if (bien.length === correctas.length && mal.length === 0) {
-        res.textContent = "✅ ¡Respuesta correcta!";
-        res.className = "result correct";
-
-        // MODO EXAMEN → sumar aciertos
-        if (modoExamen) {
-            aciertos++;
-            document.getElementById("contador-examen").textContent =
-                `Aciertos: ${aciertos} / ${totalExamen}`;
-        }
-
-        p.resultado = res.textContent;
-    } 
-    // Incorrecto
-    else {
-        res.textContent = "❌ Respuesta incorrecta";
-        res.className = "result incorrect";
-        p.resultado = res.textContent;
-    }
-
-    // =============================
-    //  MODO EXAMEN → marcar correctas/incorrectas y bloquear
-    // =============================
     if (modoExamen) {
-
-        boxes.forEach(b => {
-
-            // Desactivar clicks
-            b.style.pointerEvents = "none";
-
-            if (b.dataset.correcta === "true") {
-                // Respuesta correcta → verde
-                b.style.borderColor = "#28a745";
-                b.style.boxShadow = "0 0 8px rgba(40,167,69,0.4)";
-            }
-
-            if (b.classList.contains("selected") && b.dataset.correcta === "false") {
-                // Seleccionada incorrecta → rojo
-                b.style.borderColor = "#dc3545";
-                b.style.boxShadow = "0 0 8px rgba(220,53,69,0.4)";
-            }
-        });
-
-        // Marcar pregunta como bloqueada
-        p.respondida = true;
+      aciertos++;
     }
+
+    p.resultado = res.textContent;
+  } else {
+    res.textContent = "❌ Respuesta incorrecta";
+    res.className = "result incorrect";
+    p.resultado = res.textContent;
+  }
+
+  if (modoExamen) {
+    boxes.forEach(b => {
+      b.style.pointerEvents = "none";
+
+      if (b.dataset.correcta === "true") {
+        b.style.borderColor = "#28a745";
+        b.style.boxShadow = "0 0 8px rgba(40,167,69,0.4)";
+      }
+
+      if (b.classList.contains("selected") && b.dataset.correcta === "false") {
+        b.style.borderColor = "#dc3545";
+        b.style.boxShadow = "0 0 8px rgba(220,53,69,0.4)";
+      }
+    });
+
+    p.respondida = true;
+  }
+
+  // Actualizar porcentaje y progreso tras comprobar
+  actualizarProgreso();
 }
-
-
 
 /* -------------------------------------------------------
    6) Navegación
 --------------------------------------------------------*/
-document.getElementById("prevBtn").onclick = () => {
-  if (indiceActual > 0) mostrarPregunta(--indiceActual);
-};
-document.getElementById("nextBtn").onclick = () => {
-  if (indiceActual < preguntas.length - 1) mostrarPregunta(++indiceActual);
-};
-
 function actualizarBotones() {
-  document.getElementById("prevBtn").disabled = indiceActual === 0;
-  document.getElementById("nextBtn").disabled =
-    indiceActual === preguntas.length - 1;
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  if (!prevBtn || !nextBtn) return;
+
+  prevBtn.disabled = indiceActual === 0;
+  prevBtn.onclick = () => {
+    if (indiceActual > 0) mostrarPregunta(--indiceActual);
+  };
+
+  const esUltima = indiceActual === preguntas.length - 1;
+
+  if (modoExamen && esUltima) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = "Finalizar";
+    nextBtn.onclick = finalizarExamen;
+  } else {
+    nextBtn.textContent = "Siguiente";
+    nextBtn.disabled = (!modoExamen && esUltima);
+    nextBtn.onclick = () => {
+      if (indiceActual < preguntas.length - 1) mostrarPregunta(++indiceActual);
+    };
+  }
 }
 
 function ajustarAlturaRespuestas() {
-    const boxes = document.querySelectorAll(".answer-box");
-    if (!boxes.length) return;
+  const boxes = document.querySelectorAll(".answer-box");
+  if (!boxes.length) return;
 
-    let maxH = 0;
+  let maxH = 0;
 
-    // restablecer para medir bien
-    boxes.forEach(c => c.style.height = "auto");
+  boxes.forEach(c => c.style.height = "auto");
 
-    boxes.forEach(c => {
-        const h = c.getBoundingClientRect().height;
-        if (h > maxH) maxH = h;
-    });
+  boxes.forEach(c => {
+    const h = c.getBoundingClientRect().height;
+    if (h > maxH) maxH = h;
+  });
 
-    boxes.forEach(c => c.style.height = maxH + "px");
+  boxes.forEach(c => c.style.height = maxH + "px");
 }
 
+/* -------------------------------------------------------
+   7) Progreso y porcentaje
+--------------------------------------------------------*/
+function actualizarProgreso() {
+  const total = totalExamen || preguntas.length;
+  const respondidas = preguntas.filter(p => p.respondida).length;
+  const porcentajeCompletado = total ? Math.round((respondidas / total) * 100) : 0;
 
+  const barra = document.getElementById("progress-fill");
+  const txtProg = document.getElementById("progress-text");
+  if (barra) barra.style.width = porcentajeCompletado + "%";
+  if (txtProg) txtProg.textContent = `${porcentajeCompletado}% completado`;
+
+  const contador = document.getElementById("contador-examen");
+  if (contador && modoExamen && totalExamen) {
+    const porcentajeAcierto = Math.round((aciertos / totalExamen) * 100);
+    contador.textContent = `Aciertos: ${aciertos} / ${totalExamen} (${porcentajeAcierto}%)`;
+  }
+}
+
+/* -------------------------------------------------------
+   8) Generar test aleatorio (modo examen)
+--------------------------------------------------------*/
 function generarTestAleatorio() {
-    const n = parseInt(document.getElementById("random-count").value);
+  const n = parseInt(document.getElementById("random-count").value);
 
-    if (!n || n < 1) {
-        alert("Introduce un número válido.");
-        return;
-    }
+  if (!n || n < 1) {
+    alert("Introduce un número válido.");
+    return;
+  }
 
-    if (n > preguntasOriginales.length) {
-        alert("El número máximo es " + preguntasOriginales.length);
-        return;
-    }
+  if (n > preguntasOriginales.length) {
+    alert("El número máximo es " + preguntasOriginales.length);
+    return;
+  }
 
-    // Activar modo examen
-    modoExamen = true;
-    aciertos = 0;
-    totalExamen = n;
+  modoExamen = true;
+  aciertos = 0;
+  totalExamen = n;
 
-    document.getElementById("contador-examen").style.display = "block";
-    document.getElementById("contador-examen").textContent = `Aciertos: 0 / ${n}`;
+  const contador = document.getElementById("contador-examen");
+  if (contador) {
+    contador.style.display = "block";
+    contador.textContent = `Aciertos: 0 / ${n} (0%)`;
+  }
 
-    // Seleccionar aleatorias
-    let ids = [...Array(preguntasOriginales.length).keys()];
-    ids.sort(() => Math.random() - 0.5);
-    ids = ids.slice(0, n);
+  const progCont = document.getElementById("progress-container");
+  if (progCont) {
+    progCont.style.display = "block";
+  }
 
-    preguntas = ids.map(i => JSON.parse(JSON.stringify(preguntasOriginales[i])));
-    preguntas.forEach((p, idx) => {
-        p.numero = idx + 1;
-        p.respondida = false;   // 👈 nuevo
-    });
+  let ids = [...Array(preguntasOriginales.length).keys()];
+  ids.sort(() => Math.random() - 0.5);
+  ids = ids.slice(0, n);
 
-    generarMenu();
-    mostrarPregunta(0);
+  preguntas = ids.map(i => JSON.parse(JSON.stringify(preguntasOriginales[i])));
+  preguntas.forEach((p, idx) => {
+    p.numero = idx + 1;
+    p.respondida = false;
+  });
+
+  generarMenu();
+  mostrarPregunta(0);
+  actualizarProgreso();
+}
+
+/* -------------------------------------------------------
+   9) Finalizar examen
+--------------------------------------------------------*/
+function finalizarExamen() {
+  const total = totalExamen || preguntas.length;
+  const porcentajeAcierto = total ? Math.round((aciertos / total) * 100) : 0;
+  const esApto = porcentajeAcierto >= 70;
+
+  const cont = document.getElementById("quiz-container");
+  cont.innerHTML = "";
+
+  const box = document.createElement("div");
+  box.className = "resultado-final";
+  box.style.textAlign = "center";
+
+  const h2 = document.createElement("h2");
+  h2.textContent = esApto ? "🎉 ¡APTO!" : "❌ NO APTO";
+  h2.style.color = esApto ? "#2e8b57" : "#d32f2f";
+
+  const p = document.createElement("p");
+  p.textContent = `Has acertado ${aciertos} de ${total} preguntas (${porcentajeAcierto}%).`;
+
+  const btnVolver = document.createElement("button");
+  btnVolver.textContent = "Volver al modo estudio";
+  btnVolver.style.marginTop = "20px";
+  btnVolver.onclick = volverModoEstudio;
+
+  box.appendChild(h2);
+  box.appendChild(p);
+  box.appendChild(btnVolver);
+  cont.appendChild(box);
+
+  // Ocultar barra + contador
+  const progCont = document.getElementById("progress-container");
+  if (progCont) progCont.style.display = "none";
+  const contador = document.getElementById("contador-examen");
+  if (contador) contador.style.display = "none";
+
+  // Ocultar controles de navegación
+  document.getElementById("prevBtn").style.display = "none";
+  document.getElementById("nextBtn").style.display = "none";
+}
+
+function volverModoEstudio() {
+  modoExamen = false;
+  aciertos = 0;
+  totalExamen = 0;
+
+  // Restaurar conjunto completo de preguntas
+  preguntas = JSON.parse(JSON.stringify(preguntasOriginales));
+  preguntas.forEach(p => {
+    p.seleccionadas = [];
+    p.resultado = "";
+    p.respondida = false;
+  });
+
+  generarMenu();
+  mostrarPregunta(0);
+
+  // Volver a mostrar los botones de navegación
+  document.getElementById("prevBtn").style.display = "inline-block";
+  document.getElementById("nextBtn").style.display = "inline-block";
 }
 
 </script>
+
 </body>
 </html>
 
